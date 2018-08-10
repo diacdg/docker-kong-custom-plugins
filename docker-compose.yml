@@ -1,0 +1,55 @@
+version: "3"
+services:
+    kong-database-test:
+        image: "postgres:9.5"
+        container_name: kong-database-test
+        ports:
+            - "5432:5432"
+        environment:
+            - "POSTGRES_USER=kong"
+            - "POSTGRES_DB=kong"
+    kong-test:
+        build:
+           context: .
+           args:
+                - KONG_DOCKER_VERSION=${KONG_DOCKER_VERSION:-0.12-centos}
+        image: "kong-test"
+        container_name: kong-test
+        ports:
+            - "8000:8000"
+            - "8443:8443"
+            - "8001:8001"
+            - "8444:8444"
+        environment:
+            - "KONG_DATABASE=postgres"
+            - "KONG_PG_HOST=kong-database-test"
+            - "KONG_PG_DATABASE=kong"
+            - "KONG_PG_USER=kong"
+            - "KONG_LOG_LEVEL=info"
+            - "KONG_CUSTOM_PLUGINS=${CUSTOM_PLUGINS:-}"
+            - "KONG_ADMIN_LISTEN=0.0.0.0:8001"
+            - "KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444"
+        links:
+            - "kong-database-test"
+        depends_on:
+            - "kong-migrations"
+            - "kong-database-test"
+    kong-migrations:
+        image: "kong-test"
+        command: "kong migrations up"
+        environment:
+            - "KONG_DATABASE=postgres"
+            - "KONG_PG_HOST=kong-database-test"
+            - "KONG_PG_DATABASE=kong"
+            - "KONG_PG_USER=kong"
+            - "KONG_CUSTOM_PLUGINS=${CUSTOM_PLUGINS:-}"
+        links:
+            - "kong-database-test"
+        depends_on:
+            - "kong-database-test"
+    konga:
+        image: "pantsel/konga"
+        ports:
+            - "1337:1337"
+        links:
+            - "kong-test"
