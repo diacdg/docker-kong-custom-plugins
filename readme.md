@@ -21,13 +21,14 @@ $ docker run --rm \
   -e "KONG_PG_DATABASE=kong" \
   -e "KONG_PG_USER=kong" \
   -e "KONG_CUSTOM_PLUGINS=your-plugin" \
-  -e "KONG_PG_HOST=172.17.0.2" \
+  -e "KONG_PG_HOST=kong-database" \
   kong-custom kong migrations up
 ```
 
 ##### Run Kong server
 ```sh
 $ docker run -d --name kong-custom \
+  --link kong-database:kong-database \
   -e "KONG_DATABASE=postgres" \
   -e "KONG_PG_HOST=kong-database" \
   -e "KONG_PG_DATABASE=kong" \
